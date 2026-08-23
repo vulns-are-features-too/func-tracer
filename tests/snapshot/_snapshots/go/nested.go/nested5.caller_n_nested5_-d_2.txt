@@ -1,0 +1,3 @@
+nested5 @ nested.go 22:5
+  - nested4 @ nested.go 18:5
+    - nested3 @ nested.go 14:5
