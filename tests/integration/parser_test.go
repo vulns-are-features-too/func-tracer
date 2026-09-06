@@ -8,9 +8,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/vulns-are-features-too/func-tracer/src/lang/parser"
-	parser_adapters "github.com/vulns-are-features-too/func-tracer/src/lang/parser/adapters"
-	"github.com/vulns-are-features-too/func-tracer/src/model"
+	"github.com/vulns-are-features-too/func-tracer/lang/parser"
+	parser_adapters "github.com/vulns-are-features-too/func-tracer/lang/parser/adapters"
+	"github.com/vulns-are-features-too/func-tracer/model"
 	"github.com/vulns-are-features-too/func-tracer/tests/test_files"
 )
 

@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/vulns-are-features-too/func-tracer/src/cli"
+	"github.com/vulns-are-features-too/func-tracer/cli"
 	"github.com/vulns-are-features-too/func-tracer/tests/test_files"
 )
 

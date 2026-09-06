@@ -15,18 +15,18 @@ set dotenv-path := "./.env"
 
 ROOT := justfile_directory()
 GOCOVERDIR := ROOT / ".coverage"
-MODULE := "github.com/vulns-are-features-too/func-tracer/src"
+MODULE := "github.com/vulns-are-features-too/func-tracer"
 
-[working-directory: './src']
+[working-directory: '.']
 build:
   go build -o ../func-tracer .
 
-[working-directory: './src']
+[working-directory: '.']
 run:
   go run .
 
 _all *CMD:
-  cd src && {{CMD}}
+  {{CMD}}
   cd tests/integration && {{CMD}}
   cd tests/snapshot && {{CMD}}
   cd tests/test_files && {{CMD}}
@@ -52,12 +52,12 @@ test: validate_test_files unit_test race_test integration_test snapshot_test
   echo "Validating test files"
   go test . {{FLAGS}}
 
-[working-directory: './src']
+[working-directory: '.']
 @unit_test *FLAGS:
   echo "Running unit tests"
   go test ./... {{FLAGS}}
 
-[working-directory: './src']
+[working-directory: '.']
 @race_test *FLAGS:
   echo "Running race tests"
   go test -tags race -race ./... {{FLAGS}}
@@ -84,4 +84,4 @@ test: validate_test_files unit_test race_test integration_test snapshot_test
   just integration_test -coverprofile={{GOCOVERDIR}}/integration.out -coverpkg={{MODULE}}/...
   just snapshot_test -coverprofile={{GOCOVERDIR}}/snapshot.out -coverpkg={{MODULE}}/...
   cd {{GOCOVERDIR}} && cat unit.out <(tail -n +2 integration.out) <(tail -n +2 snapshot.out) > all.out
-  cd src && go tool cover -html={{GOCOVERDIR}}/all.out
+  go tool cover -html={{GOCOVERDIR}}/all.out

@@ -38,7 +38,7 @@ The `ls` subcommand will also list this.
 Run this to trace callers of the `request` function in `client.go`:
 
 ```sh
-./func-tracer caller --root ./src --file ./src/lang/lsp/client.go --name request
+./func-tracer caller --root . --file ./lang/lsp/client.go --name request
 ```
 
 Examples of results can be found in [`./tests/snapshot/_snapshots/`](./tests/snapshot/_snapshots/go/) which are results of files in [`./tests/test_files/*/`](./tests/test_files/go/)

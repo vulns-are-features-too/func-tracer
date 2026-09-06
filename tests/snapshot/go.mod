@@ -15,17 +15,17 @@ require (
 
 require (
 	github.com/stretchr/testify v1.12.1
-	github.com/vulns-are-features-too/func-tracer/src v0.0.1
+	github.com/vulns-are-features-too/func-tracer v0.0.1
 	github.com/vulns-are-features-too/func-tracer/tests/test_files v0.0.1
 )
 
 replace (
-	github.com/vulns-are-features-too/func-tracer/src => ../../src
-	github.com/vulns-are-features-too/func-tracer/src/cli/caller => ../../src/cli/caller
-	github.com/vulns-are-features-too/func-tracer/src/lang/index => ../../src/lang/index
-	github.com/vulns-are-features-too/func-tracer/src/lang/parser => ../../src/lang/parser
-	github.com/vulns-are-features-too/func-tracer/src/lang/parser/adapters => ../../src/lang/parser/adapters
-	github.com/vulns-are-features-too/func-tracer/src/lang/registry => ../../src/lang/registry
-	github.com/vulns-are-features-too/func-tracer/src/model => ../../src/model
+	github.com/vulns-are-features-too/func-tracer => ../..
+	github.com/vulns-are-features-too/func-tracer/cli/caller => ../../cli/caller
+	github.com/vulns-are-features-too/func-tracer/lang/index => ../../lang/index
+	github.com/vulns-are-features-too/func-tracer/lang/parser => ../../lang/parser
+	github.com/vulns-are-features-too/func-tracer/lang/parser/adapters => ../../lang/parser/adapters
+	github.com/vulns-are-features-too/func-tracer/lang/registry => ../../lang/registry
+	github.com/vulns-are-features-too/func-tracer/model => ../../model
 	github.com/vulns-are-features-too/func-tracer/tests/test_files => ../test_files
 )

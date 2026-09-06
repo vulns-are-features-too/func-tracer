@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/vulns-are-features-too/func-tracer/src/logging"
-	"github.com/vulns-are-features-too/func-tracer/src/model"
+	"github.com/vulns-are-features-too/func-tracer/logging"
+	"github.com/vulns-are-features-too/func-tracer/model"
 	"github.com/vulns-are-features-too/func-tracer/tests/test_files"
 )
 
