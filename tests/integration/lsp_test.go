@@ -18,8 +18,8 @@ import (
 
 func TestLsp(t *testing.T) {
 	t.Parallel()
-	testLsp(t, test_files.GoFiles, lsp_adapters.Go())
-	testLsp(t, test_files.RustFiles, lsp_adapters.Rust())
+	testLsp(t, test_files.GoFiles, lsp_adapters.GoPls())
+	testLsp(t, test_files.RustFiles, lsp_adapters.RustAnalyzer())
 }
 
 func testLsp(t *testing.T, files test_files.TestFileList, adapter lsp.Adapter) {

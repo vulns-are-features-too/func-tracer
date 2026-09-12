@@ -10,32 +10,32 @@ import (
 
 var errServerInit = errors.New("IsServerReady failed")
 
-// RustLsp provides rust-analyzer.
-type RustLsp struct{}
+// RustAnalyzerLsp provides rust-analyzer.
+type RustAnalyzerLsp struct{}
 
-// Rust LSP adapter.
-func Rust() *RustLsp {
-	return &RustLsp{}
+// RustAnalyzer LSP adapter.
+func RustAnalyzer() *RustAnalyzerLsp {
+	return &RustAnalyzerLsp{}
 }
 
 // Command rust-analyzer.
-func (*RustLsp) Command() string {
+func (*RustAnalyzerLsp) Command() string {
 	return "rust-analyzer"
 }
 
 // Args for rust-analyzer.
-func (*RustLsp) Args() []string {
+func (*RustAnalyzerLsp) Args() []string {
 	return nil
 }
 
 // Language rust.
-func (*RustLsp) Language() lang.Language {
+func (*RustAnalyzerLsp) Language() lang.Language {
 	return lang.Rust
 }
 
 // GetAdditionalCapabilities provides
 // LSP capabilities needed for later usage.
-func (*RustLsp) GetAdditionalCapabilities() map[string]any {
+func (*RustAnalyzerLsp) GetAdditionalCapabilities() map[string]any {
 	return map[string]any{
 		"experimental": map[string]any{
 			"serverStatusNotification": true,
@@ -45,12 +45,12 @@ func (*RustLsp) GetAdditionalCapabilities() map[string]any {
 
 // WaitServerNotificationMethod returns the
 // "experimental/serverStatus" method for rust-analyzer.
-func (*RustLsp) WaitServerNotificationMethod() string {
+func (*RustAnalyzerLsp) WaitServerNotificationMethod() string {
 	return "experimental/serverStatus"
 }
 
 // IsServerReady checks `quiescent` in the JSON.
-func (*RustLsp) IsServerReady(params json.RawMessage) (bool, error) {
+func (*RustAnalyzerLsp) IsServerReady(params json.RawMessage) (bool, error) {
 	p := struct {
 		Quiescent bool `json:"quiescent"`
 	}{Quiescent: false}

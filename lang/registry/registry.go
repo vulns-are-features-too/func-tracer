@@ -68,8 +68,8 @@ func Parser(l lang.Language) (parser.Adapter, error) {
 // ListLSP lists supported languages and their LSP servers.
 func ListLSP() map[lang.Language][]lsp.Adapter {
 	return map[lang.Language][]lsp.Adapter{
-		lang.Go:   {lsp_adapters.Go()},
-		lang.Rust: {lsp_adapters.Rust()},
+		lang.Go:   {lsp_adapters.GoPls()},
+		lang.Rust: {lsp_adapters.RustAnalyzer()},
 	}
 }
 
