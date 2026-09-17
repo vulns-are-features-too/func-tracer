@@ -13,6 +13,6 @@ import (
 func TestImplAdapter(t *testing.T) {
 	t.Parallel()
 
-	assert.Implements(t, (*lsp.Adapter)(nil), new(lsp_adapters.GoLsp))
-	assert.Implements(t, (*lsp.Adapter)(nil), new(lsp_adapters.RustLsp))
+	assert.Implements(t, (*lsp.Adapter)(nil), new(lsp_adapters.GoPlsLsp))
+	assert.Implements(t, (*lsp.Adapter)(nil), new(lsp_adapters.RustAnalyzerLsp))
 }

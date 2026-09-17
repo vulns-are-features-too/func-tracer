@@ -5,25 +5,25 @@ import (
 	"github.com/vulns-are-features-too/func-tracer/lang"
 )
 
-// GoLsp provides gopls.
-type GoLsp struct{}
+// GoPlsLsp provides gopls.
+type GoPlsLsp struct{}
 
-// Go LSP adapter.
-func Go() *GoLsp {
-	return &GoLsp{}
+// GoPls LSP adapter.
+func GoPls() *GoPlsLsp {
+	return &GoPlsLsp{}
 }
 
 // Command gopls.
-func (*GoLsp) Command() string {
+func (*GoPlsLsp) Command() string {
 	return "gopls"
 }
 
 // Args for gopls.
-func (*GoLsp) Args() []string {
+func (*GoPlsLsp) Args() []string {
 	return []string{"serve"}
 }
 
 // Language go.
-func (*GoLsp) Language() lang.Language {
+func (*GoPlsLsp) Language() lang.Language {
 	return lang.Go
 }
