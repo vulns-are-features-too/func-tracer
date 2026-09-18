@@ -21,6 +21,10 @@ type Location struct {
 	Range Range  `json:"range"`
 }
 
+func (l Location) String() string {
+	return fmt.Sprintf("%s[%d:%d]", l.URI, l.Range.Start.Line, l.Range.Start.Character)
+}
+
 // Symbol of function.
 type Symbol struct {
 	ID       string

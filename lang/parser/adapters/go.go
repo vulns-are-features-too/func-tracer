@@ -9,13 +9,6 @@ import (
 	"github.com/vulns-are-features-too/func-tracer/lang/parser"
 )
 
-//nolint:gochecknoglobals
-var goFuncKinds = []string{
-	"function_declaration",
-	"generator_function_declaration",
-	"method_declaration",
-}
-
 type goAdapter struct {
 	language *ts.Language
 }
@@ -33,6 +26,29 @@ func (a *goAdapter) Language() *ts.Language {
 	return a.language
 }
 
-func (a *goAdapter) IsFunctionKind(kind string) bool {
-	return slices.Contains(goFuncKinds, kind)
+func (a *goAdapter) IsFunctionDecl(node *ts.Node) bool {
+	kinds := []string{
+		"function_declaration",
+		"generator_function_declaration",
+		"method_declaration",
+	}
+
+	return slices.Contains(kinds, node.Kind())
+}
+
+func (a *goAdapter) GetFuncCall(callExpr *ts.Node) *ts.Node {
+	if callExpr == nil {
+		return nil
+	}
+
+	switch callExpr.Kind() {
+	case "identifier", "field_identifier": // foo()
+		return callExpr
+
+	case "selector_expression": // foo.bar()
+		return a.GetFuncCall(callExpr.ChildByFieldName("field"))
+
+	default:
+		return nil
+	}
 }

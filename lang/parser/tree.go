@@ -19,10 +19,7 @@ func (pt *ParseTree) FindFunction(location model.Location) (model.Symbol, bool) 
 		return model.Symbol{}, false
 	}
 
-	point := ts.Point{
-		Row:    location.Range.Start.Line,
-		Column: location.Range.Start.Character,
-	}
+	point := toPoint(location)
 
 	node := pt.tree.RootNode().NamedDescendantForPointRange(point, point)
 	if node == nil {
@@ -30,7 +27,7 @@ func (pt *ParseTree) FindFunction(location model.Location) (model.Symbol, bool) 
 	}
 
 	for node != nil {
-		if !pt.adapter.IsFunctionKind(node.Kind()) {
+		if !pt.adapter.IsFunctionDecl(node) {
 			node = node.Parent()
 
 			continue
@@ -41,42 +38,79 @@ func (pt *ParseTree) FindFunction(location model.Location) (model.Symbol, bool) 
 			return model.Symbol{}, false
 		}
 
-		name := nameNode.Utf8Text(pt.source)
-
-		return pt.symbolFromNode(nameNode, name), true
+		return pt.symbolFromNode(nameNode), true
 	}
 
 	return model.Symbol{}, false
 }
 
-// FindFunctionByName finds the 1st occurrence of a function with the specified name.
-func (pt *ParseTree) FindFunctionByName(name string) (model.Symbol, bool) {
+// FindFunctionByName finds all occurrences of a function with the specified name.
+func (pt *ParseTree) FindFunctionByName(name string) []model.Symbol {
+	results := []model.Symbol{}
 	if pt.tree == nil {
-		return model.Symbol{}, false
+		return results
 	}
 
-	var find func(*ts.Node) (model.Symbol, bool)
+	var find func(*ts.Node)
 
-	find = func(node *ts.Node) (model.Symbol, bool) {
-		if pt.adapter.IsFunctionKind(node.Kind()) {
+	find = func(node *ts.Node) {
+		if pt.adapter.IsFunctionDecl(node) {
 			nameNode := node.ChildByFieldName("name")
 
 			if nameNode != nil && nameNode.Utf8Text(pt.source) == name {
-				return pt.symbolFromNode(nameNode, name), true
+				results = append(results, pt.symbolFromNode(nameNode))
 			}
 		}
 
 		for childIndex := range node.NamedChildCount() {
-			child := node.NamedChild(childIndex)
-			if symbol, ok := find(child); ok {
-				return symbol, true
+			find(node.NamedChild(childIndex))
+		}
+	}
+
+	find(pt.tree.RootNode())
+
+	return results
+}
+
+// FindFunctionCalls in a function body (funcDef is the function name).
+func (pt *ParseTree) FindFunctionCalls(funcDef model.Location) []model.Symbol {
+	point := toPoint(funcDef)
+	node := pt.tree.RootNode().DescendantForPointRange(point, point)
+
+	for node != nil && !pt.adapter.IsFunctionDecl(node) {
+		node = node.Parent()
+	}
+
+	if node == nil {
+		return nil
+	}
+
+	body := node.ChildByFieldName("body")
+	if body == nil {
+		return nil
+	}
+
+	var (
+		result []model.Symbol
+		find   func(*ts.Node)
+	)
+
+	find = func(n *ts.Node) {
+		if n.Kind() == "call_expression" {
+			fn := pt.adapter.GetFuncCall(n.ChildByFieldName("function"))
+			if fn != nil {
+				result = append(result, pt.symbolFromNode(fn))
 			}
 		}
 
-		return model.Symbol{}, false
+		for i := range n.NamedChildCount() {
+			find(n.NamedChild(i))
+		}
 	}
 
-	return find(pt.tree.RootNode())
+	find(body)
+
+	return result
 }
 
 // Close the tree.
@@ -86,24 +120,27 @@ func (pt *ParseTree) Close() {
 	}
 }
 
-func (pt *ParseTree) symbolFromNode(
-	node *ts.Node,
-	name string,
-) model.Symbol {
-	start := node.StartPosition()
-	end := node.EndPosition()
+func toPos(p ts.Point) model.Position {
+	return model.Position{
+		Line:      p.Row,
+		Character: p.Column,
+	}
+}
 
+func toPoint(l model.Location) ts.Point {
+	return ts.Point{
+		Row:    l.Range.Start.Line,
+		Column: l.Range.Start.Character,
+	}
+}
+
+func (pt *ParseTree) symbolFromNode(node *ts.Node) model.Symbol {
+	name := node.Utf8Text(pt.source)
 	location := model.Location{
 		URI: pt.uri,
 		Range: model.Range{
-			Start: model.Position{
-				Line:      start.Row,
-				Character: start.Column,
-			},
-			End: model.Position{
-				Line:      end.Row,
-				Character: end.Column,
-			},
+			Start: toPos(node.StartPosition()),
+			End:   toPos(node.EndPosition()),
 		},
 	}
 

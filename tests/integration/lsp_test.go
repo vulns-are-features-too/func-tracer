@@ -4,6 +4,7 @@ package integration_test
 
 import (
 	"cmp"
+	"fmt"
 	"path"
 	"slices"
 	"testing"
@@ -41,14 +42,31 @@ func testLsp(t *testing.T, files test_files.TestFileList, adapter lsp.Adapter) {
 		for _, file := range files.TestFiles() {
 			for _, fn := range file.ListFunctions() {
 				t.Run(fn.Name, func(t *testing.T) {
-					loc := fnLoc(dir, file, fn)
-					t.Log(loc)
-
 					t.Run("References", func(t *testing.T) {
+						loc := fnLoc(dir, file, fn)
+						t.Log(loc)
+
 						refs, err := session.References(ctx, loc)
 						require.NoError(t, err)
 						assertRefs(t, fn, refs)
 					})
+
+					for _, call := range fn.Calls {
+						desc := fmt.Sprintf(
+							"Definitions of %s @ %d:%d",
+							call.Name,
+							call.Line,
+							call.Char,
+						)
+						t.Run(desc, func(t *testing.T) {
+							loc := callLoc(dir, file, &call)
+							t.Log(loc)
+
+							defs, err := session.Definitions(ctx, loc)
+							require.NoError(t, err)
+							assert.Len(t, defs, 1)
+						})
+					}
 				})
 			}
 		}

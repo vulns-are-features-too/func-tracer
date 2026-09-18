@@ -75,6 +75,7 @@ test: validate_test_files unit_test race_test integration_test snapshot_test
 [working-directory: './tests/snapshot']
 @update_test_snapshot *FLAGS:
   echo "Updating test snapshots"
+  rm -rf _snapshots/*
   UPDATE_SNAPSHOT= go test . {{FLAGS}}
 
 @test_coverage:

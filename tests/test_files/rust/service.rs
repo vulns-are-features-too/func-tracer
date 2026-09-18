@@ -1,21 +1,35 @@
-use crate::db::DB;
+use crate::db::*;
 
 pub struct Service {
-    i: i8,
-    db: DB,
+    ro_db: ReadOnlyDb,
+    rw_db: ReadWriteDb,
+}
+
+pub fn run() {
+    let mut svc = Service::new();
+    svc.foo();
+    svc.bar();
+    svc.save();
 }
 
 impl Service {
     pub fn new() -> Service {
-        Service { i: 0, db: DB {} }
+        Service {
+            ro_db: ReadOnlyDb {},
+            rw_db: ReadWriteDb {},
+        }
     }
 
     pub fn foo(&self) {
-        self.db.query("foo");
+        self.ro_db.query("foo");
     }
 
     pub fn bar(&mut self) {
-        self.i += 1;
-        self.db.query("bar");
+        self.ro_db.query("bar");
+        self.rw_db.query("bar");
+    }
+
+    pub fn save(&mut self) {
+        self.rw_db.update("save");
     }
 }

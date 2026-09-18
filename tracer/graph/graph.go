@@ -15,13 +15,35 @@ type symbolMap map[string]*model.Symbol
 type Graph struct {
 	mu      sync.RWMutex
 	callers map[string]symbolMap
+	callees map[string]symbolMap
 }
 
 // New graph.
-func New() *Graph {
-	return &Graph{
-		callers: make(map[string]symbolMap),
+func New(trackCallers bool, trackCallees bool) *Graph {
+	g := &Graph{
+		callers: nil,
+		callees: nil,
 	}
+
+	if trackCallers {
+		g.callers = make(map[string]symbolMap)
+	}
+
+	if trackCallees {
+		g.callees = make(map[string]symbolMap)
+	}
+
+	return g
+}
+
+// CallersOnly creates graph that only tracks callers.
+func CallersOnly() *Graph {
+	return New(true, false)
+}
+
+// CalleesOnly creates graph that only tracks callees.
+func CalleesOnly() *Graph {
+	return New(false, true)
 }
 
 // AddEdge for caller-callee.
@@ -29,59 +51,103 @@ func (g *Graph) AddEdge(caller, callee *model.Symbol) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
-	if g.callers[callee.ID] == nil {
-		g.callers[callee.ID] = make(symbolMap)
+	if g.callers != nil {
+		if g.callers[callee.ID] == nil {
+			g.callers[callee.ID] = make(symbolMap)
+		}
+
+		g.callers[callee.ID][caller.ID] = caller
 	}
 
-	g.callers[callee.ID][caller.ID] = caller
+	if g.callees != nil {
+		if g.callees[caller.ID] == nil {
+			g.callees[caller.ID] = make(symbolMap)
+		}
+
+		g.callees[caller.ID][callee.ID] = callee
+	}
 }
 
 // Callers returns callers of the specified function.
 func (g *Graph) Callers(symbol *model.Symbol) []*model.Symbol {
-	g.mu.RLock()
-	defer g.mu.RUnlock()
-
-	callersMap := g.callers[symbol.ID]
-
-	callers := make([]*model.Symbol, 0, len(callersMap))
-	for _, caller := range callersMap {
-		callers = append(callers, caller)
-	}
-
-	slices.SortFunc(callers, func(l, r *model.Symbol) int {
-		return cmp.Compare(l.ID, r.ID)
-	})
-
-	return callers
+	return g.listSymbols(g.callers, symbol)
 }
 
-// WalkFunc is for what to do at each node when walking the call graph.
-type WalkFunc func(curr *model.Symbol, level int)
+// Callees returns functions called by the specified function.
+func (g *Graph) Callees(symbol *model.Symbol) []*model.Symbol {
+	return g.listSymbols(g.callees, symbol)
+}
+
+// VisitFunc is for what to do at each node when walking the call graph.
+type VisitFunc func(curr *model.Symbol, level int)
+
+// nextSymbolsFunc is for how to get the next symbols from the current symbol.
+type nextSymbolsFunc func(symbol *model.Symbol) []*model.Symbol
 
 // WalkCallers does DFS walk of
 // the tree whose root is the target
 // and branches are callers of said target,
-// calling fn on each node.
-func (g *Graph) WalkCallers(target *model.Symbol, fn WalkFunc) {
+// calling visit on each node.
+func (g *Graph) WalkCallers(target *model.Symbol, visit VisitFunc) {
+	g.walk(target, g.Callers, visit)
+}
+
+// WalkCallees does DFS walk of
+// the tree whose root is the target
+// and branches are callees of said target,
+// calling visit on each node.
+func (g *Graph) WalkCallees(target *model.Symbol, visit VisitFunc) {
+	g.walk(target, g.Callees, visit)
+}
+
+func (g *Graph) listSymbols(symMap map[string]symbolMap, symbol *model.Symbol) []*model.Symbol {
+	if symMap == nil {
+		return make([]*model.Symbol, 0)
+	}
+
+	g.mu.RLock()
+	defer g.mu.RUnlock()
+
+	resultMap := symMap[symbol.ID]
+
+	results := make([]*model.Symbol, 0, len(resultMap))
+	for _, result := range resultMap {
+		results = append(results, result)
+	}
+
+	slices.SortFunc(results, func(l, r *model.Symbol) int {
+		return cmp.Compare(l.ID, r.ID)
+	})
+
+	return results
+}
+
+func (g *Graph) walk(target *model.Symbol, next nextSymbolsFunc, visit VisitFunc) {
 	const level = 1
 
-	walkedIDs := make(set)
-	walkedIDs.add(target.ID)
+	visited := make(set)
+	visited.add(target.ID)
 
-	for _, c := range g.Callers(target) {
-		g.walkCallersInner(c, fn, walkedIDs, level)
+	for _, c := range next(target) {
+		g.walkInner(c, next, visit, visited, level)
 	}
 }
 
-func (g *Graph) walkCallersInner(curr *model.Symbol, fn WalkFunc, walkedIDs set, level int) {
-	if _, ok := walkedIDs[curr.ID]; ok {
+func (g *Graph) walkInner(
+	curr *model.Symbol,
+	next nextSymbolsFunc,
+	visit VisitFunc,
+	visited set,
+	level int,
+) {
+	if _, ok := visited[curr.ID]; ok {
 		return
 	}
 
-	walkedIDs.add(curr.ID)
-	fn(curr, level)
+	visited.add(curr.ID)
+	visit(curr, level)
 
-	for _, c := range g.Callers(curr) {
-		g.walkCallersInner(c, fn, walkedIDs, level+1)
+	for _, c := range next(curr) {
+		g.walkInner(c, next, visit, visited, level+1)
 	}
 }

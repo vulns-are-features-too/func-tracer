@@ -9,35 +9,23 @@ import (
 	"github.com/vulns-are-features-too/func-tracer/tests/test_files"
 )
 
-func TestCallerCmdOnGoFiles(t *testing.T) {
+func TestCalleeCmdOnGoFiles(t *testing.T) {
 	files := test_files.GoFiles
 	dir := files.TestDir()
 
-	testCallerByPosition(t, dir, files.Db.Name(), files.Db.QueryRO, "-d", "1")
-	testCallerByPosition(t, dir, files.Db.Name(), files.Db.QueryRO)
-
-	testCallerByName(t, dir, files.Db.Name(), files.Db.Update)
-	testCallerByName(t, dir, files.Recurse.Name(), files.Recurse.RecurseSelf)
-	testCallerByName(t, dir, files.Recurse.Name(), files.Recurse.RecurseOther)
-	testCallerByName(t, dir, files.Nested.Name(), files.Nested.Nested5)
-	testCallerByName(t, dir, files.Nested.Name(), files.Nested.Nested5, "-d", "2")
+	testCalleeByPosition(t, dir, files.Main.Name(), files.Main.Main, "-d", "2")
+	testCalleeByName(t, dir, files.Main.Name(), files.Main.Main)
 }
 
-func TestCallerCmdOnRustFiles(t *testing.T) {
+func TestCalleeCmdOnRustFiles(t *testing.T) {
 	files := test_files.RustFiles
 	dir := files.TestDir()
 
-	testCallerByPosition(t, dir, files.Db.Name(), files.Db.QueryRO, "-d", "1")
-	testCallerByPosition(t, dir, files.Db.Name(), files.Db.QueryRO)
-
-	testCallerByName(t, dir, files.Db.Name(), files.Db.Update)
-	testCallerByName(t, dir, files.Recurse.Name(), files.Recurse.RecurseSelf)
-	testCallerByName(t, dir, files.Recurse.Name(), files.Recurse.RecurseOther)
-	testCallerByName(t, dir, files.Nested.Name(), files.Nested.Nested5)
-	testCallerByName(t, dir, files.Nested.Name(), files.Nested.Nested5, "-d", "2")
+	testCalleeByPosition(t, dir, files.Main.Name(), files.Main.Main, "-d", "2")
+	testCalleeByName(t, dir, files.Main.Name(), files.Main.Main)
 }
 
-func testCallerByPosition(
+func testCalleeByPosition(
 	t *testing.T,
 	dir string,
 	file string,
@@ -48,7 +36,7 @@ func testCallerByPosition(
 
 	//nolint:prealloc
 	args := []string{
-		"caller",
+		"callee",
 		"-r", testDataDir(dir),
 		"-f", testFile(dir, file),
 		"-l", strconv.Itoa(int(fn.Line)),
@@ -58,7 +46,7 @@ func testCallerByPosition(
 
 	desc := strings.Join(args, " ")
 
-	snapshotSuffix := fmt.Sprintf("caller_l%d_c%d", fn.Line, fn.Char)
+	snapshotSuffix := fmt.Sprintf("callee_l%d_c%d", fn.Line, fn.Char)
 	if len(extraArgs) > 0 {
 		snapshotSuffix = fmt.Sprintf("%s_%s", snapshotSuffix, argsToFilename(extraArgs...))
 	}
@@ -68,7 +56,7 @@ func testCallerByPosition(
 	})
 }
 
-func testCallerByName(
+func testCalleeByName(
 	t *testing.T,
 	dir string,
 	file string,
@@ -79,7 +67,7 @@ func testCallerByName(
 
 	//nolint:prealloc
 	args := []string{
-		"caller",
+		"callee",
 		"-r", testDataDir(dir),
 		"-f", testFile(dir, file),
 		"-n", fn.Name,
@@ -88,7 +76,7 @@ func testCallerByName(
 
 	desc := strings.Join(args, " ")
 
-	snapshotSuffix := "caller_n_" + fn.Name
+	snapshotSuffix := "callee_n_" + fn.Name
 	if len(extraArgs) > 0 {
 		snapshotSuffix = fmt.Sprintf("%s_%s", snapshotSuffix, argsToFilename(extraArgs...))
 	}

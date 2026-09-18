@@ -1,3 +1,0 @@
-query @ db.go 4:13
-  - bar @ service.go 12:20
-  - foo @ service.go 8:20

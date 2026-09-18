@@ -3,9 +3,7 @@ package main
 func main() {
 	start()
 
-	svc := newService()
-	svc.foo()
-	svc.bar()
+	runService(true)
 
 	recurseSelf(2)
 	recurseOther(5)

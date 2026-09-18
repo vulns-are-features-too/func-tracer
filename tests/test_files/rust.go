@@ -1,67 +1,108 @@
 package test_files
 
 // RustFiles contains all files and their functions
-// in the test Rust project
-//
-//nolint:goconst
-var RustFiles = &rustFiles{
-	Main: mainFile{
-		name:  "main.rs",
-		Main:  FuncInfo{"main", 9, 3, []FuncRef{}},
-		Start: FuncInfo{"start", 29, 3, []FuncRef{{"main.rs", 10, 4}}},
-		End:   FuncInfo{"end", 31, 3, []FuncRef{{"main.rs", 26, 4}}},
-	},
-	Service: serviceFile{
-		name:       "service.rs",
-		NewService: FuncInfo{"new", 8, 11, []FuncRef{{"main.rs", 12, 27}}},
-		Foo:        FuncInfo{"foo", 12, 11, []FuncRef{{"main.rs", 13, 8}}},
-		Bar:        FuncInfo{"bar", 16, 11, []FuncRef{{"main.rs", 14, 8}}},
-	},
-	Db: dbFile{
-		name: "db.rs",
-		Query: FuncInfo{"query", 3, 11, []FuncRef{
-			{"service.rs", 13, 16},
-			{"service.rs", 18, 16},
-		}},
-	},
-	External: externalFile{
-		name:     "external.rs",
-		ExtHello: FuncInfo{"ext_hello", 0, 7, []FuncRef{{"main.rs", 19, 14}}},
-		ExtPrint: FuncInfo{"ext_print", 4, 7, []FuncRef{{"main.rs", 20, 14}}},
-	},
-	Recurse: recurseFile{
-		name: "recurse.rs",
-		RecurseSelf: FuncInfo{"recurse_self", 0, 7, []FuncRef{
-			{"main.rs", 16, 13},
-			{"recurse.rs", 2, 8},
-		}},
-		RecurseOther: FuncInfo{"recurse_other", 6, 7, []FuncRef{
-			{"main.rs", 17, 13},
-			{"recurse.rs", 14, 4},
-		}},
-		RecurseOrReturn: FuncInfo{"recurse_or_return", 10, 7, []FuncRef{
-			{"recurse.rs", 7, 4},
-		}},
-	},
-	Nested: nestedFile{
-		name:    "nested.rs",
-		Nested0: FuncInfo{"nested0", 0, 7, []FuncRef{{"main.rs", 22, 12}}},
-		Nested1: FuncInfo{"nested1", 4, 3, []FuncRef{{"nested.rs", 1, 4}}},
-		Nested2: FuncInfo{"nested2", 8, 3, []FuncRef{{"nested.rs", 5, 4}}},
-		Nested3: FuncInfo{"nested3", 12, 3, []FuncRef{{"nested.rs", 9, 4}}},
-		Nested4: FuncInfo{"nested4", 16, 3, []FuncRef{{"nested.rs", 13, 4}}},
-		Nested5: FuncInfo{"nested5", 20, 3, []FuncRef{{"nested.rs", 17, 4}}},
-	},
-	Chain: chainFile{
-		name: "chain.rs",
-		Chain: FuncInfo{"chain", 0, 7, []FuncRef{
-			{"main.rs", 24, 15},
-			{"main.rs", 24, 37},
-		}},
-		Chain1: FuncInfo{"chain1", 4, 3, []FuncRef{{"chain.rs", 1, 4}}},
-		Chain2: FuncInfo{"chain2", 8, 3, []FuncRef{{"chain.rs", 1, 16}}},
-		Chain3: FuncInfo{"chain3", 12, 3, []FuncRef{{"chain.rs", 1, 28}}},
-	},
+// in the test Rust project.
+var RustFiles = initRustFiles()
+
+//nolint:funlen,mnd
+func initRustFiles() *rustFiles {
+	f := &rustFiles{
+		Main: mainFile{
+			name:  "main.rs",
+			Main:  newFunc("main", 7, 3),
+			Start: newFunc("start", 25, 3),
+			End:   newFunc("end", 27, 3),
+		},
+		Service: serviceFile{
+			name:       "service.rs",
+			RunService: newFunc("run", 7, 7),
+			NewService: newFunc("new", 15, 11),
+			Foo:        newFunc("foo", 22, 11),
+			Bar:        newFunc("bar", 26, 11),
+			Save:       newFunc("save", 31, 11),
+		},
+		Db: dbFile{
+			name:    "db.rs",
+			QueryRO: newFunc("query", 4, 7),
+			QueryRW: newFunc("query", 10, 7),
+			Update:  newFunc("update", 16, 7),
+		},
+		External: externalFile{
+			name:     "external.rs",
+			ExtHello: newFunc("ext_hello", 2, 7),
+			ExtPrint: newFunc("ext_print", 6, 7),
+		},
+		Recurse: recurseFile{
+			name:            "recurse.rs",
+			RecurseSelf:     newFunc("recurse_self", 0, 7),
+			RecurseOther:    newFunc("recurse_other", 6, 7),
+			RecurseOrReturn: newFunc("recurse_or_return", 10, 7),
+		},
+		Nested: nestedFile{
+			name:    "nested.rs",
+			Nested0: newFunc("nested0", 0, 7),
+			Nested1: newFunc("nested1", 4, 3),
+			Nested2: newFunc("nested2", 8, 3),
+			Nested3: newFunc("nested3", 12, 3),
+			Nested4: newFunc("nested4", 16, 3),
+			Nested5: newFunc("nested5", 20, 3),
+		},
+		Chain: chainFile{
+			name:   "chain.rs",
+			Chain:  newFunc("chain", 0, 7),
+			Chain1: newFunc("chain1", 4, 3),
+			Chain2: newFunc("chain2", 8, 3),
+			Chain3: newFunc("chain3", 12, 3),
+		},
+	}
+
+	call(f.Main, &f.Main.Main, &f.Main.Start, 8, 4)
+	call(f.Main, &f.Main.Main, &f.Main.End, 22, 4)
+	call(f.Main, &f.Main.Main, &f.Service.RunService, 10, 13)
+	call(f.Main, &f.Main.Main, &f.External.ExtHello, 15, 14)
+	call(f.Main, &f.Main.Main, &f.External.ExtPrint, 16, 14)
+	call(f.Main, &f.Main.Main, &f.Recurse.RecurseSelf, 12, 13)
+	call(f.Main, &f.Main.Main, &f.Recurse.RecurseOther, 13, 13)
+	call(f.Main, &f.Main.Main, &f.Nested.Nested0, 18, 12)
+	call(f.Main, &f.Main.Main, &f.Chain.Chain, 20, 15)
+	call(f.Main, &f.Main.Main, &f.Chain.Chain, 20, 37)
+
+	call(f.Service, &f.Service.RunService, &f.Service.NewService, 8, 27)
+	call(f.Service, &f.Service.RunService, &f.Service.Foo, 9, 8)
+	call(f.Service, &f.Service.RunService, &f.Service.Bar, 10, 8)
+	call(f.Service, &f.Service.RunService, &f.Service.Save, 11, 8)
+	call(f.Service, &f.Service.Foo, &f.Db.QueryRO, 23, 19)
+	call(f.Service, &f.Service.Bar, &f.Db.QueryRO, 27, 19)
+	call(f.Service, &f.Service.Bar, &f.Db.QueryRW, 28, 19)
+	call(f.Service, &f.Service.Save, &f.Db.Update, 32, 19)
+
+	call(f.Recurse, &f.Recurse.RecurseSelf, &f.Recurse.RecurseSelf, 2, 8)
+	call(f.Recurse, &f.Recurse.RecurseOther, &f.Recurse.RecurseOrReturn, 7, 4)
+	call(f.Recurse, &f.Recurse.RecurseOrReturn, &f.Recurse.RecurseOther, 14, 4)
+
+	call(f.Nested, &f.Nested.Nested0, &f.Nested.Nested1, 1, 4)
+	call(f.Nested, &f.Nested.Nested1, &f.Nested.Nested2, 5, 4)
+	call(f.Nested, &f.Nested.Nested2, &f.Nested.Nested3, 9, 4)
+	call(f.Nested, &f.Nested.Nested3, &f.Nested.Nested4, 13, 4)
+	call(f.Nested, &f.Nested.Nested4, &f.Nested.Nested5, 17, 4)
+
+	call(f.Chain, &f.Chain.Chain, &f.Chain.Chain1, 1, 4)
+	call(f.Chain, &f.Chain.Chain, &f.Chain.Chain2, 1, 16)
+	call(f.Chain, &f.Chain.Chain, &f.Chain.Chain3, 1, 28)
+
+	fnStdout := extFunc("stdout")
+	fnWrite := extFunc("write")
+	fnAsBytes := extFunc("as_bytes")
+
+	call(f.External, &f.External.ExtHello, fnStdout, 3, 17)
+	call(f.External, &f.External.ExtHello, fnWrite, 3, 26)
+	call(f.External, &f.External.ExtPrint, fnStdout, 7, 17)
+	call(f.External, &f.External.ExtPrint, fnWrite, 7, 26)
+	call(f.External, &f.External.ExtPrint, fnAsBytes, 7, 34)
+
+	sortData(f)
+
+	return f
 }
 
 type rustFiles struct {

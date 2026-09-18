@@ -1,0 +1,19 @@
+main @ main.rs 7:3
+  - chain @ chain.rs 0:7
+    - chain3 @ chain.rs 12:3
+    - chain1 @ chain.rs 4:3
+    - chain2 @ chain.rs 8:3
+  - ext_hello @ external.rs 2:7
+  - ext_print @ external.rs 6:7
+  - start @ main.rs 25:3
+  - end @ main.rs 27:3
+  - nested0 @ nested.rs 0:7
+    - nested1 @ nested.rs 4:3
+  - recurse_self @ recurse.rs 0:7
+  - recurse_other @ recurse.rs 6:7
+    - recurse_or_return @ recurse.rs 10:7
+  - run @ service.rs 7:7
+    - new @ service.rs 15:11
+    - foo @ service.rs 22:11
+    - bar @ service.rs 26:11
+    - save @ service.rs 31:11

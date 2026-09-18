@@ -17,10 +17,11 @@ import (
 )
 
 var (
-	errStart      = errors.New("failed to start LSP server")
-	errInit       = errors.New("failed to initialize LSP server")
-	errReferences = errors.New("References() failed")
-	errJSONDecode = errors.New("JSON decoding failed")
+	errStart       = errors.New("failed to start LSP server")
+	errInit        = errors.New("failed to initialize LSP server")
+	errReferences  = errors.New("References() failed")
+	errDefinitions = errors.New("Definitions() failed")
+	errJSONDecode  = errors.New("JSON decoding failed")
 )
 
 //nolint:gochecknoglobals
@@ -40,7 +41,12 @@ var (
 type Session interface {
 	References(
 		ctx context.Context,
-		location model.Location,
+		funcDef model.Location,
+	) ([]model.Location, error)
+
+	Definitions(
+		ctx context.Context,
+		callee model.Location,
 	) ([]model.Location, error)
 
 	Close(ctx context.Context)
@@ -95,43 +101,34 @@ func Start(
 // References of function at location.
 func (s *session) References(
 	ctx context.Context,
-	location model.Location,
+	funcDef model.Location,
 ) ([]model.Location, error) {
-	params := map[string]any{
-		"textDocument": map[string]any{
-			"uri": location.URI,
-		},
-		"position": map[string]any{
-			"line":      location.Range.Start.Line,
-			"character": location.Range.Start.Character,
-		},
-		"context": map[string]any{
-			"includeDeclaration": false,
-		},
+	params := requestParams(funcDef)
+	params["context"] = map[string]any{
+		"includeDeclaration": false,
 	}
 
-	result, err := s.client.request(
-		ctx,
-		"textDocument/references",
-		params,
-	)
+	result, err := s.client.request(ctx, "textDocument/references", params)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", errReferences, err)
 	}
 
-	if string(result) == "null" || len(result) == 0 {
-		return nil, nil
+	return decodeResult(result)
+}
+
+// Definitions of function at location.
+func (s *session) Definitions(
+	ctx context.Context,
+	callee model.Location,
+) ([]model.Location, error) {
+	params := requestParams(callee)
+
+	result, err := s.client.request(ctx, "textDocument/definition", params)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", errDefinitions, err)
 	}
 
-	var locations []model.Location
-	if err := json.Unmarshal(result, &locations); err != nil {
-		return nil, fmt.Errorf("%w: %w", errJSONDecode, err)
-	}
-
-	references := make([]model.Location, 0, len(locations))
-	references = append(references, locations...)
-
-	return references, nil
+	return decodeResult(result)
 }
 
 // Close signals LSP server to shutdown and closes connection.
@@ -225,6 +222,34 @@ func (s *session) initWithWait(
 	s.client.unsubscribeNotification(init.WaitServerNotificationMethod())
 
 	return nil
+}
+
+func requestParams(location model.Location) map[string]any {
+	return map[string]any{
+		"textDocument": map[string]any{
+			"uri": location.URI,
+		},
+		"position": map[string]any{
+			"line":      location.Range.Start.Line,
+			"character": location.Range.Start.Character,
+		},
+	}
+}
+
+func decodeResult(result json.RawMessage) ([]model.Location, error) {
+	if string(result) == "null" || len(result) == 0 {
+		return nil, nil
+	}
+
+	var locations []model.Location
+	if err := json.Unmarshal(result, &locations); err != nil {
+		return nil, fmt.Errorf("%w: %w", errJSONDecode, err)
+	}
+
+	results := make([]model.Location, 0, len(locations))
+	results = append(results, locations...)
+
+	return results, nil
 }
 
 func pathToURI(path string) (string, error) {

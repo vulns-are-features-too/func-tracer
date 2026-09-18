@@ -4,4 +4,4 @@ nested5 @ nested.rs 20:3
       - nested2 @ nested.rs 8:3
         - nested1 @ nested.rs 4:3
           - nested0 @ nested.rs 0:7
-            - main @ main.rs 9:3
+            - main @ main.rs 7:3

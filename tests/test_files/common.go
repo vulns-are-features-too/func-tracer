@@ -1,6 +1,11 @@
 // Package test_files provides details about test files
 package test_files
 
+import (
+	"cmp"
+	"slices"
+)
+
 // TestDirs are test dir names in test_files.
 var TestDirs = struct {
 	Go   string
@@ -12,15 +17,42 @@ var TestDirs = struct {
 
 // FuncInfo provides name, location, and call info about a function.
 type FuncInfo struct {
-	Name string
-	Line uint
-	Char uint
-	Refs []FuncRef
+	Name  string
+	Line  uint
+	Char  uint
+	Refs  []FuncRef
+	Calls []FuncCall
+}
+
+func newFunc(name string, line uint, char uint) FuncInfo {
+	return FuncInfo{name, line, char, []FuncRef{}, []FuncCall{}}
+}
+
+func extFunc(name string) *FuncInfo {
+	f := newFunc(name, 0, 0)
+
+	return &f
+}
+
+func call(file TestFile, caller *FuncInfo, callee *FuncInfo, line uint, char uint) {
+	c := FuncCall{callee.Name, line, char}
+	if !slices.Contains(caller.Calls, c) {
+		caller.Calls = append(caller.Calls, c)
+	}
+
+	callee.Refs = append(callee.Refs, FuncRef{file.Name(), line, char})
 }
 
 // FuncRef is a reference to the current function.
 type FuncRef struct {
 	File string
+	Line uint
+	Char uint
+}
+
+// FuncCall is a call to another function.
+type FuncCall struct {
+	Name string
 	Line uint
 	Char uint
 }
@@ -55,8 +87,8 @@ func (f mainFile) ListFunctions() []*FuncInfo {
 }
 
 type serviceFile struct {
-	name                 string
-	NewService, Foo, Bar FuncInfo
+	name                                   string
+	RunService, NewService, Foo, Bar, Save FuncInfo
 }
 
 func (f serviceFile) Name() string {
@@ -65,9 +97,11 @@ func (f serviceFile) Name() string {
 
 func (f serviceFile) ListFunctions() []*FuncInfo {
 	return []*FuncInfo{
+		&f.RunService,
 		&f.NewService,
 		&f.Foo,
 		&f.Bar,
+		&f.Save,
 	}
 }
 
@@ -76,13 +110,15 @@ func (f dbFile) Name() string {
 }
 
 type dbFile struct {
-	name  string
-	Query FuncInfo
+	name                     string
+	QueryRO, QueryRW, Update FuncInfo
 }
 
 func (f dbFile) ListFunctions() []*FuncInfo {
 	return []*FuncInfo{
-		&f.Query,
+		&f.QueryRO,
+		&f.QueryRW,
+		&f.Update,
 	}
 }
 
@@ -155,4 +191,29 @@ func (f chainFile) ListFunctions() []*FuncInfo {
 		&f.Chain2,
 		&f.Chain3,
 	}
+}
+
+func sortData(data TestFileList) {
+	for _, file := range data.TestFiles() {
+		for _, fn := range file.ListFunctions() {
+			SortFuncCalls(fn.Calls)
+		}
+	}
+}
+
+// SortFuncCalls sorts calls by name, line, & char.
+func SortFuncCalls(calls []FuncCall) {
+	slices.SortFunc(calls, func(l, r FuncCall) int {
+		c := cmp.Compare(l.Name, r.Name)
+		if c != 0 {
+			return c
+		}
+
+		c = cmp.Compare(l.Line, r.Line)
+		if c != 0 {
+			return c
+		}
+
+		return cmp.Compare(l.Char, r.Char)
+	})
 }

@@ -5,7 +5,7 @@
 ### Trace commands
 
 - [x] `caller`: recursively find callers of the `target` function
-- [ ] `callee`: recursively find functions called by the `target` function
+- [x] `callee`: recursively find functions called by the `target` function
 - [ ] `link`: given a `caller` and a `callee` function, find a path that links them to prove/disprove that `caller` may call `callee`
 - [ ] `var`: trace a `target` variable to see which functions use it or if it's ever passed to a specific function
 

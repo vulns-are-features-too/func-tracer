@@ -18,7 +18,7 @@ func (t *task) next(symbol *model.Symbol) task {
 }
 
 type result struct {
-	task    task
-	callers []*model.Symbol
-	err     error
+	task  task
+	funcs []*model.Symbol
+	err   error
 }

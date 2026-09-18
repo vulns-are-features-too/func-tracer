@@ -1,2 +1,2 @@
 recurse_self @ recurse.rs 0:7
-  - main @ main.rs 9:3
+  - main @ main.rs 7:3

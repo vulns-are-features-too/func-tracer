@@ -1,7 +1,9 @@
+use std::io::Write;
+
 pub fn ext_hello() {
-    println!("hello world");
+    _ = std::io::stdout().write(b"hello world");
 }
 
 pub fn ext_print(s: &str) {
-    println!("printing: {}", s)
+    _ = std::io::stdout().write(s.as_bytes());
 }

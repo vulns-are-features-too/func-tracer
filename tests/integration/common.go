@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/vulns-are-features-too/func-tracer/logging"
 	"github.com/vulns-are-features-too/func-tracer/model"
 	"github.com/vulns-are-features-too/func-tracer/tests/test_files"
@@ -27,6 +28,24 @@ func fnLoc(
 	dir string,
 	file test_files.TestFile,
 	fn *test_files.FuncInfo,
+) model.Location {
+	p := pos(fn.Line, fn.Char)
+
+	uri, err := fileURI(testFile(dir, file.Name()))
+	if err != nil {
+		panic(err)
+	}
+
+	return model.Location{
+		URI:   uri,
+		Range: model.Range{Start: p, End: p},
+	}
+}
+
+func callLoc(
+	dir string,
+	file test_files.TestFile,
+	fn *test_files.FuncCall,
 ) model.Location {
 	p := pos(fn.Line, fn.Char)
 
@@ -67,4 +86,22 @@ func fileURI(path string) (string, error) {
 	}).String()
 
 	return uri, nil
+}
+
+func assertSingle[I any](t *testing.T, items []I, fn func(item I) bool) {
+	t.Helper()
+
+	if !assert.NotEmpty(t, items, "empty list provided") {
+		return
+	}
+
+	count := 0
+
+	for _, item := range items {
+		if fn(item) {
+			count++
+		}
+	}
+
+	assert.Equalf(t, 1, count, "%d matches found, 1 expected", count)
 }

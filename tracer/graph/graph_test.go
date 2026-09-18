@@ -31,7 +31,7 @@ func TestWalkCallersLinear(t *testing.T) {
 	t.Parallel()
 
 	// arrange
-	g := graph.New()
+	g := graph.CallersOnly()
 	g.AddEdge(fn1, target)
 	g.AddEdge(fn2, fn1)
 
@@ -39,6 +39,28 @@ func TestWalkCallersLinear(t *testing.T) {
 
 	// act
 	g.WalkCallers(target, func(curr *model.Symbol, level int) {
+		visits = append(visits, visitEntry{curr.Name, level})
+	})
+
+	// assert
+	assert.Equal(t, []visitEntry{
+		{fn1.Name, 1},
+		{fn2.Name, 2},
+	}, visits)
+}
+
+func TestWalkCalleesLinear(t *testing.T) {
+	t.Parallel()
+
+	// arrange
+	g := graph.CalleesOnly()
+	g.AddEdge(target, fn1)
+	g.AddEdge(fn1, fn2)
+
+	visits := make([]visitEntry, 0)
+
+	// act
+	g.WalkCallees(target, func(curr *model.Symbol, level int) {
 		visits = append(visits, visitEntry{curr.Name, level})
 	})
 
@@ -60,7 +82,7 @@ func TestWalkCallersTree(t *testing.T) {
 				 /   \      /   \
 				fn11 fn12  fn21 fn22
 	*/
-	g := graph.New()
+	g := graph.CallersOnly()
 	g.AddEdge(fn1, target)
 	g.AddEdge(fn11, fn1)
 	g.AddEdge(fn12, fn1)
@@ -72,6 +94,43 @@ func TestWalkCallersTree(t *testing.T) {
 
 	// act
 	g.WalkCallers(target, func(curr *model.Symbol, level int) {
+		visits = append(visits, visitEntry{curr.Name, level})
+	})
+
+	// assert
+	assert.Equal(t, []visitEntry{
+		{fn1.Name, 1},
+		{fn11.Name, 2},
+		{fn12.Name, 2},
+		{fn2.Name, 1},
+		{fn21.Name, 2},
+		{fn22.Name, 2},
+	}, visits)
+}
+
+func TestWalkCalleesTree(t *testing.T) {
+	t.Parallel()
+
+	// arrange
+	/*
+		          target
+		         /      \
+		  		fn1        fn2
+				 /   \      /   \
+				fn11 fn12  fn21 fn22
+	*/
+	g := graph.CalleesOnly()
+	g.AddEdge(target, fn1)
+	g.AddEdge(fn1, fn11)
+	g.AddEdge(fn1, fn12)
+	g.AddEdge(target, fn2)
+	g.AddEdge(fn2, fn22)
+	g.AddEdge(fn2, fn21)
+
+	visits := make([]visitEntry, 0)
+
+	// act
+	g.WalkCallees(target, func(curr *model.Symbol, level int) {
 		visits = append(visits, visitEntry{curr.Name, level})
 	})
 
@@ -100,7 +159,7 @@ func TestWalkCallersDiamond(t *testing.T) {
 			 \      /
 				bottom
 	*/
-	g := graph.New()
+	g := graph.CallersOnly()
 	g.AddEdge(left, target)
 	g.AddEdge(right, target)
 	g.AddEdge(bottom, right)
@@ -121,12 +180,47 @@ func TestWalkCallersDiamond(t *testing.T) {
 	}, visits)
 }
 
+func TestWalkCalleesDiamond(t *testing.T) {
+	t.Parallel()
+
+	// arrange
+	left := fn1
+	right := fn2
+	bottom := fn3
+	/*
+			  target
+			 /      \
+		left      right
+			 \      /
+				bottom
+	*/
+	g := graph.CalleesOnly()
+	g.AddEdge(target, left)
+	g.AddEdge(target, right)
+	g.AddEdge(right, bottom)
+	g.AddEdge(left, bottom)
+
+	visits := make([]visitEntry, 0)
+
+	// act
+	g.WalkCallees(target, func(curr *model.Symbol, level int) {
+		visits = append(visits, visitEntry{curr.Name, level})
+	})
+
+	// assert
+	assert.Equal(t, []visitEntry{
+		{left.Name, 1},
+		{bottom.Name, 2},
+		{right.Name, 1},
+	}, visits)
+}
+
 func TestWalkCallersCycleIncludingTarget(t *testing.T) {
 	t.Parallel()
 
 	// arrange
 	// target <- fn1 <- fn2 <- target
-	g := graph.New()
+	g := graph.CallersOnly()
 	g.AddEdge(fn1, target)
 	g.AddEdge(fn2, fn1)
 	g.AddEdge(target, fn2)
@@ -145,11 +239,35 @@ func TestWalkCallersCycleIncludingTarget(t *testing.T) {
 	}, visits)
 }
 
+func TestWalkCalleesCycleIncludingTarget(t *testing.T) {
+	t.Parallel()
+
+	// arrange
+	// target <- fn1 <- fn2 <- target
+	g := graph.CalleesOnly()
+	g.AddEdge(target, fn1)
+	g.AddEdge(fn1, fn2)
+	g.AddEdge(fn2, target)
+
+	visits := make([]visitEntry, 0)
+
+	// act
+	g.WalkCallees(target, func(curr *model.Symbol, level int) {
+		visits = append(visits, visitEntry{curr.Name, level})
+	})
+
+	// assert
+	assert.Equal(t, []visitEntry{
+		{fn1.Name, 1},
+		{fn2.Name, 2},
+	}, visits)
+}
+
 func TestWalkCallersCycleSelfCall(t *testing.T) {
 	t.Parallel()
 
 	// arrange
-	g := graph.New()
+	g := graph.CallersOnly()
 	g.AddEdge(fn1, target)
 	g.AddEdge(fn2, fn1)
 	g.AddEdge(fn1, fn1)
@@ -170,11 +288,36 @@ func TestWalkCallersCycleSelfCall(t *testing.T) {
 	}, visits)
 }
 
+func TestWalkCalleesCycleSelfCall(t *testing.T) {
+	t.Parallel()
+
+	// arrange
+	g := graph.CalleesOnly()
+	g.AddEdge(target, fn1)
+	g.AddEdge(fn1, fn2)
+	g.AddEdge(fn1, fn1)
+	g.AddEdge(fn2, fn2)
+	g.AddEdge(target, target)
+
+	visits := make([]visitEntry, 0)
+
+	// act
+	g.WalkCallees(target, func(curr *model.Symbol, level int) {
+		visits = append(visits, visitEntry{curr.Name, level})
+	})
+
+	// assert
+	assert.Equal(t, []visitEntry{
+		{fn1.Name, 1},
+		{fn2.Name, 2},
+	}, visits)
+}
+
 func TestWalkCallersCycle2Callers(t *testing.T) {
 	t.Parallel()
 
 	// arrange
-	g := graph.New()
+	g := graph.CallersOnly()
 	g.AddEdge(fn1, target)
 	g.AddEdge(fn2, fn1)
 	g.AddEdge(fn1, fn2)
@@ -193,13 +336,36 @@ func TestWalkCallersCycle2Callers(t *testing.T) {
 	}, visits)
 }
 
+func TestWalkCalleesCycle2Callees(t *testing.T) {
+	t.Parallel()
+
+	// arrange
+	g := graph.CalleesOnly()
+	g.AddEdge(target, fn1)
+	g.AddEdge(fn1, fn2)
+	g.AddEdge(fn2, fn1)
+
+	visits := make([]visitEntry, 0)
+
+	// act
+	g.WalkCallees(target, func(curr *model.Symbol, level int) {
+		visits = append(visits, visitEntry{curr.Name, level})
+	})
+
+	// assert
+	assert.Equal(t, []visitEntry{
+		{fn1.Name, 1},
+		{fn2.Name, 2},
+	}, visits)
+}
+
 func TestWalkCallersCycleAll(t *testing.T) {
 	t.Parallel()
 
 	// arrange
 	symbols := []*model.Symbol{target, fn1, fn2, fn3}
 
-	g := graph.New()
+	g := graph.CallersOnly()
 	g.AddEdge(fn1, target)
 	g.AddEdge(fn2, fn1)
 	g.AddEdge(fn3, fn2)
@@ -214,6 +380,38 @@ func TestWalkCallersCycleAll(t *testing.T) {
 
 	// act
 	g.WalkCallers(target, func(curr *model.Symbol, level int) {
+		visits = append(visits, visitEntry{curr.Name, level})
+	})
+
+	// assert
+	assert.Equal(t, []visitEntry{
+		{fn1.Name, 1},
+		{fn2.Name, 2},
+		{fn3.Name, 3},
+	}, visits)
+}
+
+func TestWalkCalleesCycleAll(t *testing.T) {
+	t.Parallel()
+
+	// arrange
+	symbols := []*model.Symbol{target, fn1, fn2, fn3}
+
+	g := graph.CalleesOnly()
+	g.AddEdge(target, fn1)
+	g.AddEdge(fn1, fn2)
+	g.AddEdge(fn2, fn3)
+
+	for _, caller := range symbols {
+		for _, callee := range symbols {
+			g.AddEdge(caller, callee)
+		}
+	}
+
+	visits := make([]visitEntry, 0)
+
+	// act
+	g.WalkCallees(target, func(curr *model.Symbol, level int) {
 		visits = append(visits, visitEntry{curr.Name, level})
 	})
 

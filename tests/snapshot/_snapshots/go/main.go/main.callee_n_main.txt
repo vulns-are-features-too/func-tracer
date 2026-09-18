@@ -1,0 +1,25 @@
+main @ main.go 2:5
+  - chain @ chain.go 2:5
+    - chain2 @ chain.go 10:5
+    - chain3 @ chain.go 14:5
+    - chain1 @ chain.go 6:5
+  - extHello @ external.go 4:5
+  - extPrint @ external.go 8:5
+  - start @ main.go 20:5
+  - end @ main.go 22:5
+  - nested0 @ nested.go 2:5
+    - nested1 @ nested.go 6:5
+      - nested2 @ nested.go 10:5
+        - nested3 @ nested.go 14:5
+          - nested4 @ nested.go 18:5
+            - nested5 @ nested.go 22:5
+  - recurseSelf @ recurse.go 2:5
+  - recurseOther @ recurse.go 8:5
+    - recurseOrReturn @ recurse.go 12:5
+  - runService @ service.go 4:5
+    - newService @ service.go 11:5
+    - foo @ service.go 18:20
+      - query @ db.go 20:1
+    - bar @ service.go 22:20
+    - save @ service.go 26:20
+      - update @ db.go 25:1

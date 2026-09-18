@@ -24,7 +24,8 @@ type Index interface {
 	Build(paths []string) error
 	Close()
 	FindFunction(location model.Location) (model.Symbol, bool)
-	FindFunctionByName(uri string, name string) (model.Symbol, bool)
+	FindFunctionByName(uri string, name string) []model.Symbol
+	FindFunctionCalls(funcDef model.Location) []model.Symbol
 }
 
 type index struct {
@@ -82,13 +83,23 @@ func (i *index) FindFunction(
 func (i *index) FindFunctionByName(
 	uri string,
 	name string,
-) (model.Symbol, bool) {
+) []model.Symbol {
 	file := i.getFile(uri)
 	if file == nil {
-		return model.Symbol{}, false
+		return []model.Symbol{}
 	}
 
 	return file.FindFunctionByName(name)
+}
+
+// FindFunctionCalls in a function body (location is the function name).
+func (i *index) FindFunctionCalls(funcDef model.Location) []model.Symbol {
+	file := i.getFile(funcDef.URI)
+	if file == nil {
+		return make([]model.Symbol, 0)
+	}
+
+	return file.FindFunctionCalls(funcDef)
 }
 
 func (i *index) addFile(path string) error {

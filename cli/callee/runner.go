@@ -1,4 +1,4 @@
-package caller
+package callee
 
 import (
 	"context"
@@ -169,7 +169,7 @@ func (r *runner) trace(ctx context.Context, target *model.Symbol) (*graph.Graph,
 		args.Workers,
 	)
 
-	g, err := tracer.TraceCallers(
+	g, err := tracer.TraceCallees(
 		ctx,
 		target,
 		args.Depth,

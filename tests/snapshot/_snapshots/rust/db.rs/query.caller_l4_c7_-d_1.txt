@@ -1,0 +1,3 @@
+query @ db.rs 4:7
+  - foo @ service.rs 22:11
+  - bar @ service.rs 26:11

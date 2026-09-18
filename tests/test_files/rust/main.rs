@@ -5,14 +5,10 @@ mod nested;
 mod recurse;
 mod service;
 
-use service::Service;
-
 fn main() {
     start();
 
-    let mut svc = Service::new();
-    svc.foo();
-    svc.bar();
+    service::run();
 
     recurse::recurse_self(2);
     recurse::recurse_other(5);

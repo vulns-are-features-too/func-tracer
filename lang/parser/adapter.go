@@ -7,5 +7,6 @@ import (
 // Adapter for tree-sitter for parsing.
 type Adapter interface {
 	Language() *ts.Language
-	IsFunctionKind(kind string) bool
+	IsFunctionDecl(node *ts.Node) bool
+	GetFuncCall(callExpr *ts.Node) *ts.Node
 }

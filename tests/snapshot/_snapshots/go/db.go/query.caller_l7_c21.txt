@@ -1,0 +1,5 @@
+query @ db.go 7:21
+  - foo @ service.go 18:20
+    - runService @ service.go 4:5
+      - main @ main.go 2:5
+  - bar @ service.go 22:20

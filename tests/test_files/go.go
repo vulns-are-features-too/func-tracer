@@ -1,67 +1,102 @@
 package test_files
 
 // GoFiles contains all files and their functions
-// in the test Go project
-//
-//nolint:goconst
-var GoFiles = &goFiles{
-	Main: mainFile{
-		name:  "main.go",
-		Main:  FuncInfo{"main", 2, 5, []FuncRef{}},
-		Start: FuncInfo{"start", 22, 5, []FuncRef{{"main.go", 3, 1}}},
-		End:   FuncInfo{"end", 24, 5, []FuncRef{{"main.go", 19, 1}}},
-	},
-	Service: serviceFile{
-		name:       "service.go",
-		NewService: FuncInfo{"newService", 4, 5, []FuncRef{{"main.go", 5, 8}}},
-		Foo:        FuncInfo{"foo", 8, 20, []FuncRef{{"main.go", 6, 5}}},
-		Bar:        FuncInfo{"bar", 12, 20, []FuncRef{{"main.go", 7, 5}}},
-	},
-	Db: dbFile{
-		name: "db.go",
-		Query: FuncInfo{"query", 4, 13, []FuncRef{
-			{"service.go", 9, 8},
-			{"service.go", 13, 8},
-		}},
-	},
-	External: externalFile{
-		name:     "external.go",
-		ExtHello: FuncInfo{"extHello", 4, 5, []FuncRef{{"main.go", 12, 1}}},
-		ExtPrint: FuncInfo{"extPrint", 8, 5, []FuncRef{{"main.go", 13, 1}}},
-	},
-	Recurse: recurseFile{
-		name: "recurse.go",
-		RecurseSelf: FuncInfo{"recurseSelf", 2, 5, []FuncRef{
-			{"main.go", 9, 1},
-			{"recurse.go", 4, 2},
-		}},
-		RecurseOther: FuncInfo{"recurseOther", 8, 5, []FuncRef{
-			{"main.go", 10, 1},
-			{"recurse.go", 16, 1},
-		}},
-		RecurseOrReturn: FuncInfo{"recurseOrReturn", 12, 5, []FuncRef{
-			{"recurse.go", 9, 1},
-		}},
-	},
-	Nested: nestedFile{
-		name:    "nested.go",
-		Nested0: FuncInfo{"nested0", 2, 5, []FuncRef{{"main.go", 15, 1}}},
-		Nested1: FuncInfo{"nested1", 6, 5, []FuncRef{{"nested.go", 3, 1}}},
-		Nested2: FuncInfo{"nested2", 10, 5, []FuncRef{{"nested.go", 7, 1}}},
-		Nested3: FuncInfo{"nested3", 14, 5, []FuncRef{{"nested.go", 11, 1}}},
-		Nested4: FuncInfo{"nested4", 18, 5, []FuncRef{{"nested.go", 15, 1}}},
-		Nested5: FuncInfo{"nested5", 22, 5, []FuncRef{{"nested.go", 19, 1}}},
-	},
-	Chain: chainFile{
-		name: "chain.go",
-		Chain: FuncInfo{"chain", 2, 5, []FuncRef{
-			{"main.go", 17, 5},
-			{"main.go", 17, 20},
-		}},
-		Chain1: FuncInfo{"chain1", 6, 5, []FuncRef{{"chain.go", 3, 8}}},
-		Chain2: FuncInfo{"chain2", 10, 5, []FuncRef{{"chain.go", 3, 20}}},
-		Chain3: FuncInfo{"chain3", 14, 5, []FuncRef{{"chain.go", 3, 32}}},
-	},
+// in the test Go project.
+var GoFiles = initGoFiles()
+
+//nolint:funlen,mnd
+func initGoFiles() *goFiles {
+	f := &goFiles{
+		Main: mainFile{
+			name:  "main.go",
+			Main:  newFunc("main", 2, 5),
+			Start: newFunc("start", 20, 5),
+			End:   newFunc("end", 22, 5),
+		},
+		Service: serviceFile{
+			name:       "service.go",
+			RunService: newFunc("runService", 4, 5),
+			NewService: newFunc("newService", 11, 5),
+			Foo:        newFunc("foo", 18, 20),
+			Bar:        newFunc("bar", 22, 20),
+			Save:       newFunc("save", 26, 20),
+		},
+		Db: dbFile{
+			name:    "db.go",
+			QueryRO: newFunc("query", 7, 21),
+			QueryRW: newFunc("query", 11, 22),
+			Update:  newFunc("update", 15, 22),
+		},
+		External: externalFile{
+			name:     "external.go",
+			ExtHello: newFunc("extHello", 4, 5),
+			ExtPrint: newFunc("extPrint", 8, 5),
+		},
+		Recurse: recurseFile{
+			name:            "recurse.go",
+			RecurseSelf:     newFunc("recurseSelf", 2, 5),
+			RecurseOther:    newFunc("recurseOther", 8, 5),
+			RecurseOrReturn: newFunc("recurseOrReturn", 12, 5),
+		},
+		Nested: nestedFile{
+			name:    "nested.go",
+			Nested0: newFunc("nested0", 2, 5),
+			Nested1: newFunc("nested1", 6, 5),
+			Nested2: newFunc("nested2", 10, 5),
+			Nested3: newFunc("nested3", 14, 5),
+			Nested4: newFunc("nested4", 18, 5),
+			Nested5: newFunc("nested5", 22, 5),
+		},
+		Chain: chainFile{
+			name:   "chain.go",
+			Chain:  newFunc("chain", 2, 5),
+			Chain1: newFunc("chain1", 6, 5),
+			Chain2: newFunc("chain2", 10, 5),
+			Chain3: newFunc("chain3", 14, 5),
+		},
+	}
+
+	call(f.Main, &f.Main.Main, &f.Main.Start, 3, 1)
+	call(f.Main, &f.Main.Main, &f.Main.End, 17, 1)
+	call(f.Main, &f.Main.Main, &f.Service.RunService, 5, 1)
+	call(f.Main, &f.Main.Main, &f.External.ExtHello, 10, 1)
+	call(f.Main, &f.Main.Main, &f.External.ExtPrint, 11, 1)
+	call(f.Main, &f.Main.Main, &f.Recurse.RecurseSelf, 7, 1)
+	call(f.Main, &f.Main.Main, &f.Recurse.RecurseOther, 8, 1)
+	call(f.Main, &f.Main.Main, &f.Nested.Nested0, 13, 1)
+	call(f.Main, &f.Main.Main, &f.Chain.Chain, 15, 5)
+	call(f.Main, &f.Main.Main, &f.Chain.Chain, 15, 20)
+
+	call(f.Service, &f.Service.RunService, &f.Service.NewService, 5, 8)
+	call(f.Service, &f.Service.RunService, &f.Service.Foo, 6, 5)
+	call(f.Service, &f.Service.RunService, &f.Service.Bar, 7, 5)
+	call(f.Service, &f.Service.RunService, &f.Service.Save, 8, 5)
+	call(f.Service, &f.Service.Foo, &f.Db.QueryRO, 19, 8)
+	call(f.Service, &f.Service.Bar, &f.Db.QueryRO, 23, 8)
+	call(f.Service, &f.Service.Foo, &f.Db.QueryRW, 19, 8)
+	call(f.Service, &f.Service.Bar, &f.Db.QueryRW, 23, 8)
+	call(f.Service, &f.Service.Save, &f.Db.Update, 28, 4)
+
+	call(f.Recurse, &f.Recurse.RecurseSelf, &f.Recurse.RecurseSelf, 4, 2)
+	call(f.Recurse, &f.Recurse.RecurseOther, &f.Recurse.RecurseOrReturn, 9, 1)
+	call(f.Recurse, &f.Recurse.RecurseOrReturn, &f.Recurse.RecurseOther, 16, 1)
+
+	call(f.Nested, &f.Nested.Nested0, &f.Nested.Nested1, 3, 1)
+	call(f.Nested, &f.Nested.Nested1, &f.Nested.Nested2, 7, 1)
+	call(f.Nested, &f.Nested.Nested2, &f.Nested.Nested3, 11, 1)
+	call(f.Nested, &f.Nested.Nested3, &f.Nested.Nested4, 15, 1)
+	call(f.Nested, &f.Nested.Nested4, &f.Nested.Nested5, 19, 1)
+
+	call(f.Chain, &f.Chain.Chain, &f.Chain.Chain1, 3, 8)
+	call(f.Chain, &f.Chain.Chain, &f.Chain.Chain2, 3, 20)
+	call(f.Chain, &f.Chain.Chain, &f.Chain.Chain3, 3, 32)
+
+	call(f.External, &f.External.ExtHello, extFunc("Println"), 5, 5)
+	call(f.External, &f.External.ExtPrint, extFunc("Printf"), 9, 5)
+
+	sortData(f)
+
+	return f
 }
 
 type goFiles struct {

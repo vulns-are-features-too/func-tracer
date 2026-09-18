@@ -24,7 +24,10 @@ func TestValidateData(t *testing.T) {
 	})
 
 	validateDir(t, test_files.RustFiles, func(line string) bool {
-		return strings.HasPrefix(line, "fn ") || strings.Contains(line, " fn ")
+		hasFn := strings.HasPrefix(line, "fn ") || strings.Contains(line, " fn ")
+		isInTrait := strings.HasSuffix(line, ";")
+
+		return hasFn && !isInTrait
 	})
 }
 
