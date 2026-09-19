@@ -62,6 +62,8 @@ func runCallee(cmd *cobra.Command) error {
 		return err
 	}
 
+	runner.Close()
+
 	reportCallees(cmd, result, &target, args.Root)
 
 	return nil

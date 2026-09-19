@@ -62,6 +62,8 @@ func runCaller(cmd *cobra.Command) error {
 		return err
 	}
 
+	runner.Close()
+
 	reportCallers(cmd, result, &target, args.Root)
 
 	return nil

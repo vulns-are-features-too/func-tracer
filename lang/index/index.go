@@ -65,6 +65,8 @@ func (i *index) Close() {
 	for _, file := range i.files {
 		file.Close()
 	}
+
+	i.files = nil
 }
 
 // FindFunction by location.
