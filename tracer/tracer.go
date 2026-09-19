@@ -153,11 +153,15 @@ func (t *Tracer) runTasks(
 		}
 
 		wg.Go(func() {
-			sem <- struct{}{}
-			defer func() { <-sem }()
+			select {
+			case <-ctx.Done():
+				return
+			case sem <- struct{}{}:
+				defer func() { <-sem }()
 
-			traceResults, err := fnTrace(ctx, currTask.symbol)
-			results <- result{currTask, traceResults, err}
+				traceResults, err := fnTrace(ctx, currTask.symbol)
+				results <- result{currTask, traceResults, err}
+			}
 		})
 	}
 
