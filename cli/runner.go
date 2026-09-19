@@ -1,4 +1,4 @@
-package caller
+package cli
 
 import (
 	"context"
@@ -7,7 +7,6 @@ import (
 	"net/url"
 	"path/filepath"
 
-	"github.com/spf13/cobra"
 	"github.com/vulns-are-features-too/func-tracer/lang"
 	"github.com/vulns-are-features-too/func-tracer/lang/index"
 	"github.com/vulns-are-features-too/func-tracer/lang/lsp"
@@ -36,6 +35,34 @@ type runner struct {
 	parser parser.Adapter
 	lsp    lsp.Adapter
 	idx    index.Index
+}
+
+func initRunner(logger logging.Logger) (*runner, error) {
+	logger.Infof("Init runner")
+
+	r := runner{logger: logger}
+
+	if err := r.detectLanguage(); err != nil {
+		return nil, err
+	}
+
+	if err := r.initParser(); err != nil {
+		return nil, err
+	}
+
+	if err := r.initLsp(); err != nil {
+		return nil, err
+	}
+
+	if err := r.index(); err != nil {
+		return nil, err
+	}
+
+	return &r, nil
+}
+
+func (r *runner) Close() {
+	r.idx.Close()
 }
 
 func (r *runner) detectLanguage() error {
@@ -80,7 +107,7 @@ func (r *runner) index() error {
 		return fmt.Errorf("%w: %w", errIndexing, err)
 	}
 
-	r.logger.Infof("Source files found: %s", len(files))
+	r.logger.Infof("Source files found: %d", len(files))
 
 	r.idx = index.New(r.logger, r.parser)
 	if err := r.idx.Build(files); err != nil {
@@ -152,7 +179,17 @@ func (r *runner) findTargetByName(fileURI string, name string) (model.Symbol, er
 	return targets[0], nil
 }
 
-func (r *runner) trace(ctx context.Context, target *model.Symbol) (*graph.Graph, error) {
+type traceFunc func(t *tracer.Tracer) func(
+	ctx context.Context,
+	target *model.Symbol,
+	maxDepth int,
+) (*graph.Graph, error)
+
+func (r *runner) trace(
+	ctx context.Context,
+	target *model.Symbol,
+	fnTrace traceFunc,
+) (*graph.Graph, error) {
 	r.logger.Infof("Starting LSP server: %s", r.lsp.Command())
 
 	session, err := lsp.Start(ctx, r.logger, r.lsp, args.Root)
@@ -169,7 +206,7 @@ func (r *runner) trace(ctx context.Context, target *model.Symbol) (*graph.Graph,
 		args.Workers,
 	)
 
-	g, err := tracer.TraceCallers(
+	g, err := fnTrace(tracer)(
 		ctx,
 		target,
 		args.Depth,
@@ -179,42 +216,6 @@ func (r *runner) trace(ctx context.Context, target *model.Symbol) (*graph.Graph,
 	}
 
 	return g, nil
-}
-
-func run(ctx context.Context, cmd *cobra.Command, logger logging.Logger) error {
-	r := runner{logger: logger}
-	r.logger.Infof("Starting trace")
-
-	if err := r.detectLanguage(); err != nil {
-		return err
-	}
-
-	if err := r.initParser(); err != nil {
-		return err
-	}
-
-	if err := r.initLsp(); err != nil {
-		return err
-	}
-
-	if err := r.index(); err != nil {
-		return err
-	}
-	defer r.idx.Close()
-
-	target, err := r.findTarget()
-	if err != nil {
-		return err
-	}
-
-	result, err := r.trace(ctx, &target)
-	if err != nil {
-		return err
-	}
-
-	report(cmd, result, &target, args.Root)
-
-	return nil
 }
 
 //nolint:wrapcheck

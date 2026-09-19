@@ -111,6 +111,9 @@ linters:
       - path: tests/
         linters:
           - dupl
+      - path: cli/(callee|caller).go
+        linters:
+          - dupl
       - path: tests/snapshot/
         linters:
           - paralleltest

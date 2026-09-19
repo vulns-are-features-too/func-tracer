@@ -1,4 +1,4 @@
-package caller
+package cli
 
 import (
 	"fmt"
@@ -12,7 +12,30 @@ import (
 
 const indent string = "  "
 
-func report(cmd *cobra.Command, graph *graph.Graph, target *model.Symbol, projectRoot string) {
+func reportCallers(
+	cmd *cobra.Command,
+	graph *graph.Graph,
+	target *model.Symbol,
+	projectRoot string,
+) {
+	report(cmd, target, projectRoot, graph.WalkCallers)
+}
+
+func reportCallees(
+	cmd *cobra.Command,
+	graph *graph.Graph,
+	target *model.Symbol,
+	projectRoot string,
+) {
+	report(cmd, target, projectRoot, graph.WalkCallees)
+}
+
+func report(
+	cmd *cobra.Command,
+	target *model.Symbol,
+	projectRoot string,
+	walker func(target *model.Symbol, visit graph.VisitFunc),
+) {
 	rootPath, err := filepath.Abs(projectRoot)
 	if err == nil {
 		projectRoot = rootPath
@@ -20,7 +43,7 @@ func report(cmd *cobra.Command, graph *graph.Graph, target *model.Symbol, projec
 
 	stdout := cmd.OutOrStdout()
 	_, _ = fmt.Fprintf(stdout, "%s\n", formatSymbol(projectRoot, target))
-	graph.WalkCallers(target, func(curr *model.Symbol, level int) {
+	walker(target, func(curr *model.Symbol, level int) {
 		_, _ = fmt.Fprintf(
 			stdout,
 			"%s- %s\n",

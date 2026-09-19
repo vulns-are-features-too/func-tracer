@@ -1,5 +1,4 @@
-// Package ls provides cmd to list supported languages & LSP servers.
-package ls
+package cli
 
 import (
 	"fmt"
@@ -8,8 +7,7 @@ import (
 	"github.com/vulns-are-features-too/func-tracer/lang/registry"
 )
 
-// Cmd "ls".
-func Cmd() *cobra.Command {
+func lsCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:           "ls",
 		Short:         "List supported languages and their LSP servers",
@@ -17,14 +15,14 @@ func Cmd() *cobra.Command {
 		SilenceUsage:  false,
 		Args:          cobra.NoArgs,
 		Run: func(cmd *cobra.Command, _ []string) {
-			run(cmd)
+			runLs(cmd)
 		},
 	}
 
 	return cmd
 }
 
-func run(cmd *cobra.Command) {
+func runLs(cmd *cobra.Command) {
 	lsps := registry.ListLSP()
 
 	stdout := cmd.OutOrStdout()

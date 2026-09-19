@@ -6,9 +6,6 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/vulns-are-features-too/func-tracer/cli/callee"
-	"github.com/vulns-are-features-too/func-tracer/cli/caller"
-	"github.com/vulns-are-features-too/func-tracer/cli/ls"
 )
 
 // Execute is the CLI entry point.
@@ -28,9 +25,9 @@ func RootCmd() *cobra.Command {
 		Short: "Trace function callers",
 	}
 
-	cmd.AddCommand(callee.Cmd())
-	cmd.AddCommand(caller.Cmd())
-	cmd.AddCommand(ls.Cmd())
+	cmd.AddCommand(calleeCmd())
+	cmd.AddCommand(callerCmd())
+	cmd.AddCommand(lsCmd())
 
 	return cmd
 }

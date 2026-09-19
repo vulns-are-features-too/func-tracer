@@ -1,4 +1,4 @@
-package callee
+package cli
 
 import (
 	"errors"
@@ -24,17 +24,43 @@ var (
 	errFileNotFound         = errors.New("file not found")
 )
 
+func tracePreRunE(cmd *cobra.Command, _ []string) error {
+	err := validateArgs()
+	if err != nil {
+		return err
+	}
+
+	err = cmd.MarkFlagRequired("file")
+	if err != nil {
+		panic(err)
+	}
+
+	// either name or line+column must be used
+	cmd.MarkFlagsOneRequired("name", "line")
+	cmd.MarkFlagsMutuallyExclusive("name", "line")
+	cmd.MarkFlagsOneRequired("name", "column")
+	cmd.MarkFlagsMutuallyExclusive("name", "column")
+
+	return nil
+}
+
 func parseArgs(cmd *cobra.Command) {
 	flags := cmd.Flags()
 
 	flags.StringVarP(&args.Root, "root", "r", ".", "workspace root")
 	flags.StringVarP(&args.File, "file", "f", "", "target file")
 
-	flags.StringVarP(&args.Name, "name", "n", "", "function name")
+	flags.StringVarP(&args.Name, "name", "n", "", "target function name")
 	flags.UintVarP(&args.Line, "line", "l", 0, "target line, zero based")
 	flags.UintVarP(&args.Column, "column", "c", 0, "target column, zero based")
 
-	flags.IntVarP(&args.Depth, "depth", "d", 0, "maximum callee depth (0=unlimited)")
+	flags.IntVarP(
+		&args.Depth,
+		"depth",
+		"d",
+		0,
+		"max depth (0=unlimited), for example `-n foo -d 1` will resolve foo -> bar (1 call)",
+	)
 
 	flags.IntVarP(&args.Workers, "workers", "w", 1, "number of parallel workers")
 
