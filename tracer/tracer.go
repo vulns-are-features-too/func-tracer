@@ -212,7 +212,7 @@ func nextTasksFromResult(
 			continue
 		}
 
-		if _, ok := visited[fn.ID]; ok {
+		if visited.has(fn.ID) {
 			continue
 		}
 
@@ -294,7 +294,7 @@ func (t *Tracer) findCalleesInner(
 	for _, callee := range t.src.FindFunctionCalls(funcDef.Location) {
 		t.logger.Debugf("Found callee `%s` at %s", callee.Name, callee.Location)
 
-		if _, ok := seen[callee.ID]; ok {
+		if seen.has(callee.ID) {
 			continue
 		}
 

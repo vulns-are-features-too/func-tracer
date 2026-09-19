@@ -5,3 +5,9 @@ type set map[string]struct{}
 func (s set) add(key string) {
 	s[key] = struct{}{}
 }
+
+func (s set) has(key string) bool {
+	_, ok := s[key]
+
+	return ok
+}
