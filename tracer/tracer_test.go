@@ -13,12 +13,19 @@ import (
 	"github.com/vulns-are-features-too/func-tracer/tracer"
 )
 
-func TestTraceCallers(t *testing.T) {
-	t.Parallel()
-
+func createSUT(t *testing.T) (*fakes.FakeSourceProvider, *tracer.Tracer) {
+	t.Helper()
 	logger := logging.Test(t)
 	src := fakes.Source()
 	tracer := tracer.New(logger, src, "", 1)
+
+	return src, tracer
+}
+
+func TestTraceCallers(t *testing.T) {
+	t.Parallel()
+
+	src, tracer := createSUT(t)
 
 	target := symbol("target", 0)
 	fn1 := symbol("fn1", 1)
@@ -74,9 +81,7 @@ func TestTraceCallers(t *testing.T) {
 func TestTraceCallees(t *testing.T) {
 	t.Parallel()
 
-	logger := logging.Test(t)
-	src := fakes.Source()
-	tracer := tracer.New(logger, src, "", 1)
+	src, tracer := createSUT(t)
 
 	target := symbol("target", 0)
 	fn1 := symbol("fn1", 1)
@@ -135,9 +140,7 @@ func TestTraceCallersWithMaxDepth(t *testing.T) {
 
 	const maxDepth = 2
 
-	logger := logging.Test(t)
-	src := fakes.Source()
-	tracer := tracer.New(logger, src, "", 1)
+	src, tracer := createSUT(t)
 
 	target := symbol("target", 0)
 	fn1 := symbol("fn1", 1)
@@ -176,9 +179,7 @@ func TestTraceCalleesWithMaxDepth(t *testing.T) {
 
 	const maxDepth = 2
 
-	logger := logging.Test(t)
-	src := fakes.Source()
-	tracer := tracer.New(logger, src, "", 1)
+	src, tracer := createSUT(t)
 
 	target := symbol("target", 0)
 	fn1 := symbol("fn1", 1)
