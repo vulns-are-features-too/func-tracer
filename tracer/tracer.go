@@ -97,7 +97,8 @@ func (t *Tracer) trace(
 	maxDepth int,
 ) (*graph.Graph, error) {
 	tasks := []task{newTask(target)}
-	visited := set{target.ID: {}}
+	visited := newSet()
+	visited.add(target.ID)
 
 	for len(tasks) > 0 {
 		t.logger.Debugf("Remaining tasks: %d", len(tasks))
@@ -118,7 +119,7 @@ func (t *Tracer) traceBatch(
 	fnTrace traceFunc,
 	collectResult collectResultFunc,
 	graph *graph.Graph,
-	visited set,
+	visited *set,
 	tasks []task,
 	maxDepth int,
 ) ([]task, error) {
@@ -175,7 +176,7 @@ func nextTasksFromResults(
 	results chan result,
 	collectResult collectResultFunc,
 	graph *graph.Graph,
-	visited set,
+	visited *set,
 	maxDepth int,
 ) ([]task, error) {
 	newTasks := make([]task, 0)
@@ -196,7 +197,7 @@ func nextTasksFromResult(
 	res result,
 	collectResult collectResultFunc,
 	graph *graph.Graph,
-	visited set,
+	visited *set,
 	maxDepth int,
 ) ([]task, error) {
 	if res.err != nil {
@@ -248,7 +249,7 @@ func (t *Tracer) findCallersInner(
 	}
 
 	callers := make([]*model.Symbol, 0, len(refs))
-	seen := make(set)
+	seen := newSet()
 
 	for _, ref := range refs {
 		caller, ok := t.src.FindFunction(ref)
@@ -256,7 +257,7 @@ func (t *Tracer) findCallersInner(
 			continue
 		}
 
-		if _, ok := seen[caller.ID]; ok {
+		if seen.has(caller.ID) {
 			continue
 		}
 
@@ -288,7 +289,7 @@ func (t *Tracer) findCalleesInner(
 ) ([]*model.Symbol, error) {
 	results := make([]*model.Symbol, 0)
 
-	seen := make(set)
+	seen := newSet()
 	seen.add(funcDef.ID)
 
 	for _, callee := range t.src.FindFunctionCalls(funcDef.Location) {
