@@ -46,6 +46,13 @@ func (c *Cache[T]) GetOrExec(
 	c.mu.Unlock()
 
 	e.value, e.err = fn()
+
+	if e.err != nil {
+		c.mu.Lock()
+		delete(c.entries, key)
+		c.mu.Unlock()
+	}
+
 	close(e.ready)
 
 	return e.value, e.err
