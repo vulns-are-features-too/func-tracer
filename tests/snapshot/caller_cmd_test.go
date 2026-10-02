@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/vulns-are-features-too/func-tracer/tests/test_files"
+	"github.com/vulns-are-features-too/func-tracer/testutil/test_files"
 )
 
 func TestCallerCmdOnGoFiles(t *testing.T) {

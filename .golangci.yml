@@ -109,8 +109,10 @@ linters:
         linters:
           - gochecknoglobals
           - wrapcheck
-      - path: tests/
+          - dupl
+      - path: testutil/test_files/
         linters:
+          - gochecknoglobals
           - dupl
       - path: cli/(callee|caller).go
         linters:

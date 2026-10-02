@@ -16,7 +16,7 @@ require (
 require (
 	github.com/stretchr/testify v1.12.1
 	github.com/vulns-are-features-too/func-tracer v0.0.1
-	github.com/vulns-are-features-too/func-tracer/tests/test_files v0.0.1
+	github.com/vulns-are-features-too/func-tracer/testutil/test_files v0.0.1
 )
 
 replace (
@@ -27,5 +27,5 @@ replace (
 	github.com/vulns-are-features-too/func-tracer/lang/parser/adapters => ../../lang/parser/adapters
 	github.com/vulns-are-features-too/func-tracer/lang/registry => ../../lang/registry
 	github.com/vulns-are-features-too/func-tracer/model => ../../model
-	github.com/vulns-are-features-too/func-tracer/tests/test_files => ../test_files
+	github.com/vulns-are-features-too/func-tracer/testutil/test_files => ../../testutil/test_files
 )

@@ -29,7 +29,7 @@ _all *CMD:
   {{CMD}}
   cd tests/integration && {{CMD}}
   cd tests/snapshot && {{CMD}}
-  cd tests/test_files && {{CMD}}
+  cd testutil/test_files && {{CMD}}
 
 lint:
   @just _all golangci-lint run
@@ -47,7 +47,7 @@ fix_lint:
 
 test: validate_test_files unit_test race_test integration_test snapshot_test
 
-[working-directory: './tests/test_files']
+[working-directory: './testutil/test_files']
 @validate_test_files *FLAGS:
   echo "Validating test files"
   go test . {{FLAGS}}
@@ -84,5 +84,5 @@ test: validate_test_files unit_test race_test integration_test snapshot_test
   just unit_test -coverprofile={{GOCOVERDIR}}/unit.out
   just integration_test -coverprofile={{GOCOVERDIR}}/integration.out -coverpkg={{MODULE}}/...
   just snapshot_test -coverprofile={{GOCOVERDIR}}/snapshot.out -coverpkg={{MODULE}}/...
-  cd {{GOCOVERDIR}} && cat unit.out <(tail -n +2 integration.out) <(tail -n +2 snapshot.out) | grep -vP '/(test_files|testutil)/' > all.out
+  cd {{GOCOVERDIR}} && cat unit.out <(tail -n +2 integration.out) <(tail -n +2 snapshot.out) | grep -vP '/testutil/' > all.out
   go tool cover -html={{GOCOVERDIR}}/all.out

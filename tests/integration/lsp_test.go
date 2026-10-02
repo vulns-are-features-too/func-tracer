@@ -14,7 +14,7 @@ import (
 	"github.com/vulns-are-features-too/func-tracer/lang/lsp"
 	lsp_adapters "github.com/vulns-are-features-too/func-tracer/lang/lsp/adapters"
 	"github.com/vulns-are-features-too/func-tracer/model"
-	"github.com/vulns-are-features-too/func-tracer/tests/test_files"
+	"github.com/vulns-are-features-too/func-tracer/testutil/test_files"
 )
 
 func TestLsp(t *testing.T) {

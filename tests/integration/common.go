@@ -11,10 +11,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/vulns-are-features-too/func-tracer/logging"
 	"github.com/vulns-are-features-too/func-tracer/model"
-	"github.com/vulns-are-features-too/func-tracer/tests/test_files"
+	"github.com/vulns-are-features-too/func-tracer/testutil/test_files"
 )
 
-const testFilesDir = "../test_files"
+const testFilesDir = "../../testutil/test_files"
 
 func testFile(dir string, file string) string {
 	return path.Join(testFilesDir, dir, file)

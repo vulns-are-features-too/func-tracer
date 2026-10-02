@@ -13,12 +13,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/vulns-are-features-too/func-tracer/cli"
-	"github.com/vulns-are-features-too/func-tracer/tests/test_files"
+	"github.com/vulns-are-features-too/func-tracer/testutil/test_files"
 )
 
 const (
 	snapshotsEnv      = "UPDATE_SNAPSHOT"
-	testFilesDir      = "../test_files"
+	testFilesDir      = "../../testutil/test_files"
 	snapshotsDir      = "./_snapshots"
 	snapshotDirPerms  = 0o700
 	snapshotFilePerms = 0o600

@@ -41,7 +41,7 @@ Run this to trace callers of the `request` function in `client.go`:
 ./func-tracer caller --root . --file ./lang/lsp/client.go --name request
 ```
 
-Examples of results can be found in [`./tests/snapshot/_snapshots/`](./tests/snapshot/_snapshots/go/) which are results of files in [`./tests/test_files/*/`](./tests/test_files/go/)
+Examples of results can be found in [`./tests/snapshot/_snapshots/`](./tests/snapshot/_snapshots/go/) which are results of files in [`./testutil/test_files/*/`](./testutil/test_files/go/)
 
 ## Running the code
 
