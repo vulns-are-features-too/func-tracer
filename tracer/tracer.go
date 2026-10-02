@@ -8,11 +8,11 @@ import (
 	"net/url"
 	"path/filepath"
 	"strings"
-	"sync"
 
 	"github.com/vulns-are-features-too/func-tracer/logging"
 	"github.com/vulns-are-features-too/func-tracer/model"
 	"github.com/vulns-are-features-too/func-tracer/tracer/cache"
+	"github.com/vulns-are-features-too/func-tracer/tracer/executor"
 	"github.com/vulns-are-features-too/func-tracer/tracer/graph"
 	"github.com/vulns-are-features-too/func-tracer/tracer/source"
 )
@@ -22,13 +22,11 @@ var (
 	errLspDefinitions = errors.New("failed to get LSP definitions")
 	errFindCallers    = errors.New("findCallers failed")
 	errFindCallees    = errors.New("findCallees failed")
-	errTrace          = errors.New("trace failed")
-	errCtxCancelled   = errors.New("context cancelled")
 )
 
 type (
 	traceFunc         func(ctx context.Context, symbol *model.Symbol) ([]*model.Symbol, error)
-	collectResultFunc func(graph *graph.Graph, input *model.Symbol, output *model.Symbol)
+	collectResultFunc func(input *model.Symbol, output *model.Symbol)
 )
 
 // Tracer of functions.
@@ -66,10 +64,10 @@ func (t *Tracer) TraceCallers(
 	target *model.Symbol,
 	maxDepth int,
 ) (*graph.Graph, error) {
-	collect := func(g *graph.Graph, in *model.Symbol, out *model.Symbol) {
+	g := graph.CallersOnly()
+	collect := func(in *model.Symbol, out *model.Symbol) {
 		g.AddEdge(out, in)
 	}
-	g := graph.CallersOnly()
 
 	return t.trace(ctx, g, t.findCallers, collect, target, maxDepth)
 }
@@ -80,10 +78,10 @@ func (t *Tracer) TraceCallees(
 	target *model.Symbol,
 	maxDepth int,
 ) (*graph.Graph, error) {
-	collect := func(g *graph.Graph, in *model.Symbol, out *model.Symbol) {
+	g := graph.CalleesOnly()
+	collect := func(in *model.Symbol, out *model.Symbol) {
 		g.AddEdge(in, out)
 	}
-	g := graph.CalleesOnly()
 
 	return t.trace(ctx, g, t.findCallees, collect, target, maxDepth)
 }
@@ -96,132 +94,25 @@ func (t *Tracer) trace(
 	target *model.Symbol,
 	maxDepth int,
 ) (*graph.Graph, error) {
-	tasks := []task{newTask(target)}
 	visited := newSet()
 	visited.add(target.ID)
 
-	for len(tasks) > 0 {
-		t.logger.Debugf("Remaining tasks: %d", len(tasks))
-
-		newTasks, err := t.traceBatch(ctx, fnTrace, collectResult, graph, visited, tasks, maxDepth)
-		if err != nil {
-			return nil, fmt.Errorf("%w: %w", errTrace, err)
+	workerFactory := func() worker {
+		return worker{
+			ctx,
+			t.logger,
+			visited,
+			maxDepth,
+			fnTrace,
+			collectResult,
 		}
-
-		tasks = newTasks
 	}
+
+	executor := executor.New(ctx, t.workers, workerFactory)
+	executor.Enqueue(newTask(target))
+	executor.Run()
 
 	return graph, nil
-}
-
-func (t *Tracer) traceBatch(
-	ctx context.Context,
-	fnTrace traceFunc,
-	collectResult collectResultFunc,
-	graph *graph.Graph,
-	visited *set,
-	tasks []task,
-	maxDepth int,
-) ([]task, error) {
-	if ctx.Err() != nil {
-		return nil, fmt.Errorf("%w: %w", errCtxCancelled, ctx.Err())
-	}
-
-	results := t.runTasks(ctx, fnTrace, tasks, maxDepth)
-
-	newTasks, err := nextTasksFromResults(results, collectResult, graph, visited, maxDepth)
-	if err != nil {
-		return nil, err
-	}
-
-	return newTasks, nil
-}
-
-func (t *Tracer) runTasks(
-	ctx context.Context,
-	fnTrace traceFunc,
-	tasks []task,
-	maxDepth int,
-) chan result {
-	sem := make(chan struct{}, t.workers)
-
-	var wg sync.WaitGroup
-
-	results := make(chan result, len(tasks))
-	for _, currTask := range tasks {
-		if maxDepth != 0 && currTask.depth > maxDepth {
-			continue
-		}
-
-		wg.Go(func() {
-			select {
-			case <-ctx.Done():
-				return
-			case sem <- struct{}{}:
-				defer func() { <-sem }()
-
-				traceResults, err := fnTrace(ctx, currTask.symbol)
-				results <- result{currTask, traceResults, err}
-			}
-		})
-	}
-
-	wg.Wait()
-	close(results)
-
-	return results
-}
-
-func nextTasksFromResults(
-	results chan result,
-	collectResult collectResultFunc,
-	graph *graph.Graph,
-	visited *set,
-	maxDepth int,
-) ([]task, error) {
-	newTasks := make([]task, 0)
-
-	for result := range results {
-		res, err := nextTasksFromResult(result, collectResult, graph, visited, maxDepth)
-		if err != nil {
-			return nil, err
-		}
-
-		newTasks = append(newTasks, res...)
-	}
-
-	return newTasks, nil
-}
-
-func nextTasksFromResult(
-	res result,
-	collectResult collectResultFunc,
-	graph *graph.Graph,
-	visited *set,
-	maxDepth int,
-) ([]task, error) {
-	if res.err != nil {
-		return nil, res.err
-	}
-
-	newTasks := make([]task, 0)
-
-	for _, fn := range res.funcs {
-		collectResult(graph, res.task.symbol, fn)
-
-		if maxDepth != 0 && res.task.depth >= maxDepth {
-			continue
-		}
-
-		if visited.has(fn.ID) {
-			continue
-		}
-
-		visited.add(fn.ID)
-		newTasks = append(newTasks, res.task.next(fn))
-	}
-
-	return newTasks, nil
 }
 
 func (t *Tracer) findCallers(

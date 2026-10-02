@@ -8,6 +8,7 @@ require (
 	github.com/tree-sitter/go-tree-sitter v0.25.0
 	github.com/tree-sitter/tree-sitter-go v0.25.0
 	github.com/tree-sitter/tree-sitter-rust v0.24.2
+	pgregory.net/rapid v1.3.0
 )
 
 require (

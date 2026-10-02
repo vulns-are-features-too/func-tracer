@@ -16,9 +16,3 @@ func newTask(symbol *model.Symbol) task {
 func (t *task) next(symbol *model.Symbol) task {
 	return task{symbol: symbol, depth: t.depth + 1}
 }
-
-type result struct {
-	task  task
-	funcs []*model.Symbol
-	err   error
-}
