@@ -84,5 +84,5 @@ test: validate_test_files unit_test race_test integration_test snapshot_test
   just unit_test -coverprofile={{GOCOVERDIR}}/unit.out
   just integration_test -coverprofile={{GOCOVERDIR}}/integration.out -coverpkg={{MODULE}}/...
   just snapshot_test -coverprofile={{GOCOVERDIR}}/snapshot.out -coverpkg={{MODULE}}/...
-  cd {{GOCOVERDIR}} && cat unit.out <(tail -n +2 integration.out) <(tail -n +2 snapshot.out) > all.out
+  cd {{GOCOVERDIR}} && cat unit.out <(tail -n +2 integration.out) <(tail -n +2 snapshot.out) | grep -vP '/(test_files|testutil)/' > all.out
   go tool cover -html={{GOCOVERDIR}}/all.out
